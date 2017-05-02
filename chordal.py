@@ -29,7 +29,7 @@ class NodeTree:
 	def __str__ (self):
 		return "(%s, %s, %s)" % (self.data, self.leftChild, self.rightChild)
 
-#node strucutre for a two purpose tree and adjency lists		
+#node structure for a two purpose tree and adjency lists		
 class NodeGen:
 	
 	def __init__(self, data, tree):
@@ -82,9 +82,9 @@ class Tree:
 				self.insertNode (node.neighbour[2], data)
 		return
 		
-	#prints out inOrder traveseral of tree
+	#prints out inOrder traversal of tree
 	#Input: The root node
-	#Output: Display inorder traveseral of tree
+	#Output: Display inorder traversal of tree
 	def inOrder(self, node):
 		if node != None:
 			self.inOrder (node.neighbour[1])
@@ -92,9 +92,9 @@ class Tree:
 			self.inOrder (node.neighbour[2])
 		return
 			
-	#prints out the preOrder traveseral of tree
+	#prints out the preOrder traversal of tree
 	#Input: The root node
-	#Output: Display preorder traveseral of tree
+	#Output: Display preorder traversal of tree
 	def preOrder(self, node):
 		if node != None:
 			print (node.data)
@@ -126,10 +126,14 @@ class ChordalSparse:
 		self.matrixDist = None
 		self.ptMap = None
 		self.listVerticeDegree1=[]
+		self.recentEdges = []
+		self.rangeX = 0
+		self.rangeY = 0
+		
 	
-	#returns the dictionary(hashmap) for the adjency list
+	#returns the dictionary(hashmap) for the adjacency list
 	#Input: None
-	#Output: The adjency list hashmap
+	#Output: The adjacency list hashmap
 	def getGraph(self):
 		return self.dictNode
 	
@@ -139,7 +143,7 @@ class ChordalSparse:
 	def getRoot(self):
 		return self.root
 	
-	#takes the tree and converts it an adjency list structure
+	#takes the tree and converts it an adjacency list structure
 	#Input: A tree class 
 	#Output: None
 	def convertFromTree(self, tree):
@@ -189,6 +193,9 @@ class ChordalSparse:
 			sampleV = random.sample(setInter, 1)
 			if self.bfs(v1, v2, setInter, sampleV[0].neighbour):
 				self.addEdge(v1,v2)
+				#print("gii\n")
+				self.recentEdges.append(v1)					
+				self.recentEdges.append(v2)
 				return True
 		return False
 	
@@ -217,6 +224,10 @@ class ChordalSparse:
 	#output: none
 	def addRanEdges(self, num):
 		goal = (num+self.edges)		
+		#print ("start: ",self.edges)
+		#print ("goal: ",goal)
+		self.recentEdges = []
+		
 		if ((num+self.edges) > ((self.vertex * (self.vertex-1)))/2):
 			print ("Unable to this many edges")
 			return False
@@ -225,13 +236,14 @@ class ChordalSparse:
 				ranPt1=random.randint(0,self.vertex-1)
 			else:
 				ranPt1=random.sample(self.listVerticeDegree1,1)[0]
+			
 			ranPt2=random.randint(0,self.vertex-1)
 			testV1 =  self.dictNode[ranPt1]
 			testV2 =  self.dictNode[ranPt2]
 			if testV1 == testV2 or self.ifEdgeExist(testV1,testV2):
 				continue
 			else:
-				if (self.insertQuery(testV1, testV2) and len(self.listVerticeDegree1) !=0):
+				if (self.insertQuery(testV1, testV2) and len(self.listVerticeDegree1) !=0):				
 					try:
 						self.listVerticeDegree1.remove(ranPt1)
 					except ValueError:
@@ -240,6 +252,7 @@ class ChordalSparse:
 						self.listVerticeDegree1.remove(ranPt2)
 					except ValueError:
 						pass
+		#print (self.recentEdges)
 
 	###Sets up random points 
 	###input: two positive ints for the range of number to generated
@@ -249,9 +262,9 @@ class ChordalSparse:
 		used =[]
 		self.generatedPtList= self.ptMap
 		for i in range (self.vertex):			
-			p= Point(random.randint(minRange, maxRange),random.randint(minRange, maxRange))
+			p= Point(random.randint(0, minRange),random.randint(0, maxRange))
 			while (p in used):
-				p= Point(random.randint(minRange, maxRange),random.randint(minRange, maxRange))
+				p= Point(random.randint(0, minRange),random.randint(0, maxRange))
 			self.ptMap[i]=p
 			used.append(p)
 		for i in range(self.vertex):
@@ -291,19 +304,30 @@ class ChordalSparse:
 		screenWidth = w
 		master = Tkinter.Tk()
 		
-		w = Tkinter.Canvas(master, width=w, height=h)
-		w.pack()
-		rangeDif = maxRange - minRange
+		window = Tkinter.Canvas(master, width=w, height=h, bg='white')
+		window.pack()
 		
+		for i in range (0, screenHeight, 50):
+			window.create_line(0,i, screenWidth,i, fill='gray')	
+		for i in range (0, screenWidth, 50):
+			window.create_line(i,0, i,screenHeight, fill='gray')
+		
+		print ("Each tick in horizontal direction is ", self.rangeX/16.0," units.")
+		print ("Each tick in vertical direction is ", self.rangeY/16.0," units.")
 		
 		for i in range (self.vertex):
 			#print (chor.dictNode[i].data)
 			for n in self.dictNode[i].neighbour:
 				#print ("N: ",n.data)
-				self.drawLine(w,self.dictNode[i].data, n.data, screenHeight, screenWidth, rangeDif)
+				self.drawLine(window,self.dictNode[i].data, n.data, screenHeight, screenWidth)
 				#w.create_line()
+		
+		size = len(self.recentEdges)
+		#print (self.recentEdges)
+		for i in range(0, size, 2):
+			self.drawLine2(window,self.recentEdges[i].data,self.recentEdges[i+1].data, screenHeight, screenWidth)
 		for i in range (self.vertex):
-			self.drawCircle(w,self.dictNode[i].data,3, screenHeight, screenWidth, rangeDif)
+			self.drawCircle(window,self.dictNode[i].data,3, screenHeight, screenWidth)
 		
 		
 		return None
@@ -311,20 +335,24 @@ class ChordalSparse:
 	#draws a circle (internal fcn)
 	#input requires the canvas object, a point object, and radius (int)
 	#output draws a red circle at that point
-	def drawCircle(self, canvas, pt, r, maxHeight, maxWidth, rangeDif):		
+	def drawCircle(self, canvas, pt, r, maxHeight, maxWidth):		
 				
-		canvas.create_oval((self.ptMap[pt].x)*maxWidth/rangeDif-r, maxHeight-((self.ptMap[pt].y))*maxHeight/rangeDif-r, 
-			(self.ptMap[pt].x)*maxWidth/rangeDif+r, maxHeight-((self.ptMap[pt].y))*maxHeight/rangeDif+r, fill="red")
+		canvas.create_oval((self.ptMap[pt].x)*maxWidth/self.rangeX-r, maxHeight-((self.ptMap[pt].y))*maxHeight/self.rangeY-r, 
+			(self.ptMap[pt].x)*maxWidth/self.rangeX+r, maxHeight-((self.ptMap[pt].y))*maxHeight/self.rangeY+r, fill="red")
 		return None
 	
-	#draws a line (internal fcn)
-	#input requires the canvas object, 2 point object
-	#output draws a black line between two points
-	def drawLine(self, canvas, pt1, pt2, maxHeight, maxWidth, rangeDif):		
+	def drawLine(self, canvas, pt1, pt2, maxHeight, maxWidth):		
 
-		canvas.create_line(self.ptMap[pt1].x*maxWidth/rangeDif, maxHeight-(self.ptMap[pt1].y*maxHeight/rangeDif), 
-			self.ptMap[pt2].x*maxWidth/rangeDif, maxHeight-(self.ptMap[pt2].y*maxHeight/rangeDif))		
+		canvas.create_line(self.ptMap[pt1].x*maxWidth/self.rangeX, maxHeight-(self.ptMap[pt1].y*maxHeight/self.rangeY), 
+			self.ptMap[pt2].x*maxWidth/self.rangeX, maxHeight-(self.ptMap[pt2].y*maxHeight/self.rangeY))		
 		return None
+	
+	def drawLine2(self, canvas, pt1, pt2, maxHeight, maxWidth):		
+
+		canvas.create_line(self.ptMap[pt1].x*maxWidth/self.rangeX, maxHeight-(self.ptMap[pt1].y*maxHeight/self.rangeY), 
+			self.ptMap[pt2].x*maxWidth/self.rangeX, maxHeight-(self.ptMap[pt2].y*maxHeight/self.rangeY), fill='red')	
+		return None
+	
 	
 	#saves the distance matrix to a given file name
 	#input filename as name including the extension type needed
@@ -369,7 +397,7 @@ class gui_tk(Tkinter.Tk):
 		self.labelNumRangeText =Tkinter.StringVar()
 		labelNumRange = Tkinter.Label(self,textvariable=self.labelNumRangeText)
 		labelNumRange.grid(row=2, sticky=Tkinter.W)
-		self.labelNumRangeText.set(u'Enter the value range for points:')
+		self.labelNumRangeText.set(u'Enter the max values for x and y ( must be > 0):')
 		
 		self.numRangeLowEntry = Tkinter.Entry(self)
 		self.numRangeLowEntry.grid (column=1, row=2, sticky=Tkinter.W)
@@ -553,10 +581,7 @@ class gui_tk(Tkinter.Tk):
 			numRangeHigh = int (self.numRangeHighEntry.get())
 			if (numRangeHigh < 0):
 				tkMessageBox.showwarning("Error","Entry for upper bound of point is less than 0.")
-				return
-			if (numRangeHigh < numRangeLow):
-				tkMessageBox.showwarning("Error","Entry for upper bound of point is less than lower bound.")
-				return
+				return			
 		else:
 			tkMessageBox.showwarning("Error","Entry for upper bound of point is not an integer.")
 			return			
@@ -565,6 +590,8 @@ class gui_tk(Tkinter.Tk):
 		self.ready = True
 		self.tree = Tree()
 		self.chor = ChordalSparse()
+		self.chor.rangeX =  int (self.numRangeLowEntry.get())
+		self.chor.rangeY = int(self.numRangeHighEntry.get())
 				
 		li=[]
 		for i in range(0, numVertices):
@@ -578,6 +605,7 @@ class gui_tk(Tkinter.Tk):
 		
 		if (numEdges>(numVertices-1)):
 			self.chor.addRanEdges(numEdges-(numVertices-1))
+		self.chor.recentEdges=[]
 		return None
 
 	### adds edges to the current graph based on input
@@ -589,7 +617,7 @@ class gui_tk(Tkinter.Tk):
 		
 		if isStrInt(edges):
 			edges = int (self.AddEdgesEntry.get())
-			max = ((self.chor.vertex*(self.chor.vertex-1)/2)-(self.chor.vertex-1))
+			max = ((self.chor.vertex*(self.chor.vertex-1)/2)-(self.chor.vertex)+1)
 			if (edges < 0):
 				tkMessageBox.showwarning("Error","Entry for add edges is less than 0.")
 				return
@@ -623,20 +651,14 @@ class gui_tk(Tkinter.Tk):
 			if (numRangeHigh < 0):
 				tkMessageBox.showwarning("Error","Entry for upper bound of point is less than 0.")
 				return
-			if (numRangeHigh < numRangeLow):
-				tkMessageBox.showwarning("Error","Entry for upper bound of point is less than lower bound.")
-				return
 		else:
 			tkMessageBox.showwarning("Error","Entry for upper bound of point is not an integer.")
 			return		
 		
-		self.chor.createDisplay(800,600,numRangeLow,numRangeHigh)
+		self.chor.createDisplay(800,800,numRangeLow,numRangeHigh)
 		
-##resolution presets
-resWidth = 800
-resHeight = 600
 
 if __name__ == "__main__":
 	app = gui_tk(None)
-	app.geometry('600x400')#window size
+	app.geometry('640x400')#window size
 	app.mainloop()
